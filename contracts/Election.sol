@@ -11,8 +11,12 @@ contract Election is Ownable {
   bool public isStarted;
   bool public isEnded;
   uint256[] public voterWeight;
+  uint256 public voteCount;
+  uint256 public abstainCount;
+  string public name;
 
-  constructor(uint256[] memory weight_) {
+  constructor(string memory name_, uint256[] memory weight_) {
+    name = name_;
     voterWeight = weight_;
   }
 
@@ -29,13 +33,26 @@ contract Election is Ownable {
     isEnded = true;
   }
 
-  function vote(uint256 weight, uint256 id) external onlyOnce {
+  function addCandidate(string memory id) external onlyOwner {
+    candidates.push(id);
+  }
+
+  function vote(uint256 voterType, uint256 id) external onlyOnce {
     require(isStarted == true, "not started");
     require(isEnded == false, "ended");
 
-    votes[candidates[id]] = voterWeight[weight];
+    votes[candidates[id]] += voterWeight[voterType];
     hasVoted[msg.sender] = true;
+    voteCount++;
     emit Vote(candidates[id], msg.sender);
+  }
+
+  function abstain() external onlyOnce {
+    require(isStarted == true, "not started");
+    require(isEnded == false, "ended");
+
+    hasVoted[msg.sender] = true;
+    abstainCount++;
   }
 
   function getCandidate(uint256 id) external view returns (string memory, uint256) {
